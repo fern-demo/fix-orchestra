@@ -558,7 +558,7 @@ public class FernDocGenerator {
         }
         sb.append("| ").append(f.getId()).append(" | [").append(cell(f.getName())).append("](").append(fieldHref(f))
             .append(") | ").append(cell(f.getType())).append(" | ").append(presence(ref)).append(" | ")
-            .append(cell(truncate(desc, 300))).append(" |\n");
+            .append(cell(truncate(desc, 160))).append(" |\n");
       } else if (member instanceof GroupRefType) {
         final GroupRefType ref = (GroupRefType) member;
         final GroupType g = groupsById.get(ref.getId());
@@ -568,7 +568,7 @@ public class FernDocGenerator {
         final FieldType counter = g.getNumInGroup() == null ? null : fieldsById.get(g.getNumInGroup().getId());
         sb.append("| ").append(counter == null ? "" : String.valueOf(counter.getId())).append(" | [")
             .append(cell(g.getName())).append("](").append(groupHref(g)).append(") | Repeating group | ")
-            .append(componentPresence(ref)).append(" | ").append(cell(truncate(synopsis(g.getAnnotation()), 300)))
+            .append(componentPresence(ref)).append(" | ").append(cell(truncate(synopsis(g.getAnnotation()), 160)))
             .append(" |\n");
       } else if (member instanceof ComponentRefType) {
         final ComponentRefType ref = (ComponentRefType) member;
@@ -577,7 +577,7 @@ public class FernDocGenerator {
           continue;
         }
         sb.append("| | [").append(cell(c.getName())).append("](").append(componentHref(c)).append(") | Component | ")
-            .append(componentPresence(ref)).append(" | ").append(cell(truncate(synopsis(c.getAnnotation()), 300)))
+            .append(componentPresence(ref)).append(" | ").append(cell(truncate(synopsis(c.getAnnotation()), 160)))
             .append(" |\n");
       }
     }
