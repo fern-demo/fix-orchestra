@@ -485,8 +485,7 @@ public class FernDocGenerator {
       final StringBuilder sb = new StringBuilder();
       frontmatter(sb, pageTitle, fields.size() + " fields");
       for (final FieldType f : fields) {
-        sb.append("## ").append(f.getId()).append(" · ").append(escapeText(f.getName()))
-            .append(" [#tag-").append(f.getId()).append("]\n\n");
+        sb.append("## Tag ").append(f.getId()).append(": ").append(escapeText(f.getName())).append("\n\n");
         sb.append("<Badge intent=\"info\" minimal>Tag ").append(f.getId()).append("</Badge> <Badge intent=\"note\" minimal>")
             .append(escapeText(f.getType())).append("</Badge>");
         lifecycleBadges(sb, f.getAdded(), f.getDeprecated());
@@ -524,7 +523,7 @@ public class FernDocGenerator {
     final StringBuilder sb = new StringBuilder();
     frontmatter(sb, "Datatypes", "Datatypes used by FIX fields");
     for (final Datatype d : datatypesByName.values()) {
-      sb.append("## ").append(escapeText(d.getName())).append(" [#").append(kebab(d.getName())).append("]\n\n");
+      sb.append("## ").append(escapeText(d.getName())).append("\n\n");
       if (d.getBaseType() != null) {
         sb.append("Base type: ").append(typeLink(d.getBaseType())).append("\n\n");
       }
@@ -875,7 +874,7 @@ public class FernDocGenerator {
   }
 
   private String fieldHref(final FieldType f) {
-    return basePath + "/fields/" + fieldPageSlug(f.getId() / FIELD_PAGE_SPAN) + "#tag-" + f.getId();
+    return basePath + "/fields/" + fieldPageSlug(f.getId() / FIELD_PAGE_SPAN) + "#tag-" + f.getId() + "-" + f.getName().toLowerCase();
   }
 
   private static String fieldPageSlug(final int bucket) {
@@ -887,7 +886,7 @@ public class FernDocGenerator {
       return "";
     }
     if (datatypesByName.containsKey(type)) {
-      return "[" + escapeText(type) + "](" + basePath + "/datatypes#" + kebab(type) + ")";
+      return "[" + escapeText(type) + "](" + basePath + "/datatypes#" + type.toLowerCase() + ")";
     }
     return "`" + escapeText(type) + "`";
   }
@@ -1008,7 +1007,26 @@ public class FernDocGenerator {
 
   private static void write(final Path path, final String content) throws IOException {
     Files.createDirectories(path.getParent());
-    Files.write(path, content.getBytes(StandardCharsets.UTF_8));
+    Files.write(path, llmsBadges(content).getBytes(StandardCharsets.UTF_8));
+  }
+
+  /**
+   * Badges flatten to unlabeled lines in Fern's Markdown/llms.txt output, so each badge row is
+   * shown to humans only and replaced by a single labeled line for agents.
+   */
+  static String llmsBadges(final String content) {
+    final StringBuilder out = new StringBuilder();
+    for (final String line : content.split("\n", -1)) {
+      if (line.startsWith("<Badge")) {
+        final String plain = line.replaceAll("<Badge[^>]*>", "").replaceAll("</Badge>\\s*", " · ")
+            .replaceAll("\\s*·\\s*$", "").trim();
+        out.append("<llms-ignore>\n").append(line).append("\n</llms-ignore>\n\n<llms-only>\n")
+            .append(plain).append("\n</llms-only>\n");
+      } else {
+        out.append(line).append('\n');
+      }
+    }
+    return out.substring(0, out.length() - 1);
   }
 
   private static Repository unmarshal(final InputStream inputStream) throws JAXBException {
